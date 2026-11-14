@@ -1,4 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
+from xml.sax.saxutils import escape as xml_escape
+
+from fastapi import APIRouter, Form, HTTPException, Query
+from fastapi.responses import Response
 
 from app.channels.base import RecommendationOrchestrator
 from app.channels.mobile_presenter import to_mobile_response
@@ -86,9 +90,30 @@ def recommend_rotation_get(
 
 @router.post("/channels/whatsapp/webhook", response_model=WhatsAppOutgoingMessage)
 def whatsapp_webhook(payload: WhatsAppIncomingMessage):
-    """Channel adapter for WhatsApp (Twilio / Meta Cloud API compatible structure)."""
+    """Channel adapter for WhatsApp (JSON / Meta Cloud API & Web simulator, 1-step or 2-step)."""
     outgoing, _ = handle_whatsapp_query(payload, orchestrator)
     return outgoing
+
+
+@router.post("/channels/whatsapp/twilio")
+def whatsapp_twilio_webhook(
+    From: str = Form(default="whatsapp:+549000000000"),
+    Body: str = Form(default=""),
+    Latitude: Optional[float] = Form(default=None),
+    Longitude: Optional[float] = Form(default=None),
+):
+    """Twilio WhatsApp webhook compatible endpoint (form-urlencoded -> TwiML XML)."""
+    outgoing, _ = handle_whatsapp_query(
+        WhatsAppIncomingMessage(
+            from_number=From,
+            body=Body,
+            latitude=Latitude,
+            longitude=Longitude,
+        ),
+        orchestrator,
+    )
+    twiml = f'<?xml version="1.0" encoding="UTF-8"?><Response><Message>{xml_escape(outgoing.reply_text)}</Message></Response>'
+    return Response(content=twiml, media_type="application/xml")
 
 
 @router.post("/channels/mobile/recommend", response_model=MobileRecommendationResponse)

@@ -212,6 +212,12 @@ def _evaluate_candidate(
             or "raices_profundas" in candidate.benefit_tags
         ):
             slope_pts += 4.0
+        if anomalies.extreme_rain_days_gt40mm >= 3 and (
+            "control_erosion" in candidate.benefit_tags
+            or "raices_profundas" in candidate.benefit_tags
+        ):
+            slope_pts += 3.0
+            anomaly_reasons.append("protege el suelo frente a lluvias intensas diarias")
         slope_fit = (
             f"Apto para pendiente del lote ({slope:.1f}% ≤ máx. {candidate.max_slope_pct:.0f}%)."
         )

@@ -1,5 +1,5 @@
 import calendar
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import math
 from typing import Any, Dict, List, Tuple
@@ -428,9 +428,88 @@ def parse_nasa_power_with_pandas(
     )
 
 
+def fetch_nasa_power_daily_raw(
+    lat: float,
+    lon: float,
+    start_date: str,
+    end_date: str,
+) -> Dict[str, Any]:
+    """Fetch recent daily precipitation from NASA POWER daily API to detect extreme storm days."""
+    params = {
+        "parameters": "PRECTOTCORR",
+        "community": "AG",
+        "longitude": round(lon, 4),
+        "latitude": round(lat, 4),
+        "start": start_date,
+        "end": end_date,
+        "format": "JSON",
+    }
+    with httpx.Client(timeout=min(8.0, settings.http_timeout_seconds)) as client:
+        response = client.get(settings.nasa_power_daily_url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+
+def get_daily_storm_metrics(lat: float, lon: float, end_year: int) -> Dict[str, Any]:
+    """Count daily storm events (>=25mm and >=40mm/day) over the last 2 years using SQLite cache."""
+    start_date = f"{end_year - 1}0101"
+    end_date = f"{end_year}1231"
+    cache_key = geo_cache.grid_key(lat, lon, step_deg=0.05, extra=f"daily:{start_date}-{end_date}")
+    cached = geo_cache.get_json("nasa_power_daily", cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        raw = fetch_nasa_power_daily_raw(lat=lat, lon=lon, start_date=start_date, end_date=end_date)
+        prec_map = raw.get("properties", {}).get("parameter", {}).get("PRECTOTCORR", {})
+        valid_vals = [float(v) for v in prec_map.values() if v is not None and float(v) > -900.0]
+        if not valid_vals:
+            raise ValueError("No valid daily precipitation readings")
+        metrics = {
+            "extreme_rain_days_gt40mm": sum(1 for v in valid_vals if v >= 40.0),
+            "heavy_rain_days_gt25mm": sum(1 for v in valid_vals if v >= 25.0),
+            "max_daily_rain_mm": round(max(valid_vals), 1),
+            "daily_source": "nasa_power_daily_api",
+        }
+        geo_cache.set_json(
+            "nasa_power_daily",
+            cache_key,
+            metrics,
+            ttl_seconds=settings.cache_climate_ttl_hours * 3600,
+        )
+        return metrics
+    except Exception as exc:
+        logger.debug("NASA POWER daily API skipped/failed (%s)", exc)
+        return {
+            "extreme_rain_days_gt40mm": 0,
+            "heavy_rain_days_gt25mm": 0,
+            "max_daily_rain_mm": 0.0,
+            "daily_source": "unavailable",
+        }
+
+
+def _apply_daily_storm_metrics(analysis: ClimateAnalysis, metrics: Dict[str, Any]) -> ClimateAnalysis:
+    ext = int(metrics.get("extreme_rain_days_gt40mm", 0))
+    heavy = int(metrics.get("heavy_rain_days_gt25mm", 0))
+    max_day = float(metrics.get("max_daily_rain_mm", 0.0))
+
+    analysis.anomalies.extreme_rain_days_gt40mm = ext
+    analysis.anomalies.heavy_rain_days_gt25mm = heavy
+    analysis.anomalies.max_daily_rain_mm = max_day
+
+    if ext >= 3 or max_day >= 45.0:
+        storm_alert = (
+            f"Lluvias intensas diarias detectadas (NASA POWER Daily): pico de {max_day:.1f} mm/día "
+            f"y {ext} día(s) con >40 mm en los últimos 2 años; reforzar cobertura para evitar erosión."
+        )
+        if storm_alert not in analysis.anomalies.climate_alerts:
+            analysis.anomalies.climate_alerts.append(storm_alert)
+    return analysis
+
+
 def get_climate_analysis(lat: float, lon: float) -> ClimateAnalysis:
     """Fetch NASA POWER historical series (with SQLite cache) and compute climate/water anomalies."""
-    end_year = min(2025, datetime.utcnow().year - 1)
+    end_year = min(2025, datetime.now(timezone.utc).year - 1)
     start_year = end_year - 10
     cache_key = geo_cache.grid_key(lat, lon, step_deg=0.05, extra=f"{start_year}-{end_year}")
     cached = geo_cache.get_json("nasa_power", cache_key)
@@ -438,11 +517,16 @@ def get_climate_analysis(lat: float, lon: float) -> ClimateAnalysis:
         analysis = ClimateAnalysis.model_validate(cached)
         if not analysis.source.endswith("_cache"):
             analysis.source = f"{analysis.source}_cache"
+        if analysis.anomalies.max_daily_rain_mm == 0.0 and analysis.anomalies.extreme_rain_days_gt40mm == 0:
+            daily_metrics = get_daily_storm_metrics(lat=lat, lon=lon, end_year=end_year)
+            analysis = _apply_daily_storm_metrics(analysis, daily_metrics)
         return analysis
 
     try:
         raw_json = fetch_nasa_power_raw(lat=lat, lon=lon, start_year=start_year, end_year=end_year)
         analysis = parse_nasa_power_with_pandas(raw_json, lat=lat, source="nasa_power_api")
+        daily_metrics = get_daily_storm_metrics(lat=lat, lon=lon, end_year=end_year)
+        analysis = _apply_daily_storm_metrics(analysis, daily_metrics)
         geo_cache.set_json(
             "nasa_power",
             cache_key,

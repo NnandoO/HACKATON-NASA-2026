@@ -116,6 +116,9 @@ class ClimateAnomalies(BaseModel):
     dry_soil_months: List[str]
     annual_et0_mm: float
     water_balance_mm: float
+    extreme_rain_days_gt40mm: int = 0
+    heavy_rain_days_gt25mm: int = 0
+    max_daily_rain_mm: float = 0.0
     frost_risk_months: List[str]
     drier_recent_trend: bool
     hotter_recent_trend: bool
@@ -161,6 +164,19 @@ class SoilProfile(BaseModel):
     source: str
 
 
+class NdviHistoryPoint(BaseModel):
+    date: str
+    ndvi: float
+    source: str
+
+
+class CdlCropYear(BaseModel):
+    year: int
+    code: int
+    category: str
+    mapped_crop_id: Optional[str] = None
+
+
 class VegetationHealth(BaseModel):
     estimated_ndvi: float
     ndvi_status: str
@@ -169,6 +185,9 @@ class VegetationHealth(BaseModel):
     soil_exhaustion_risk: str
     vegetation_alert: str
     source: str
+    ndvi_series: List[NdviHistoryPoint] = Field(default_factory=list)
+    cdl_history: List[CdlCropYear] = Field(default_factory=list)
+    auto_detected_monoculture_years: Optional[int] = None
 
 
 class EconomicOutlook(BaseModel):

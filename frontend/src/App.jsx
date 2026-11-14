@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock,
   Database,
+  Download,
   Globe,
   Loader2,
   MapPin,
@@ -13,6 +14,7 @@ import {
   Sparkles,
   Sprout,
   Wheat,
+  WifiOff,
 } from "lucide-react";
 import { fetchCrops, recommendRotation } from "@/api/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -101,6 +103,8 @@ export default function App() {
   const [currentCrop, setCurrentCrop] = useState("maiz");
   const [yearsSameCrop, setYearsSameCrop] = useState("1");
   const [recentPlots, setRecentPlots] = useState(() => loadHistory());
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== "undefined" ? navigator.onLine : true));
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
@@ -113,7 +117,29 @@ export default function App() {
         }
       })
       .catch(() => {});
+
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    const onBeforeInstall = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+    };
   }, []);
+
+  const handleInstallPwa = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    setInstallPrompt(null);
+  };
 
   const savePlotToHistory = (entry) => {
     setRecentPlots((prev) => {
@@ -219,9 +245,21 @@ export default function App() {
                 Clima & SMAP (NASA POWER) · Relieve SRTM · Suelo SoilGrids/SSURGO · NDVI MODIS · FAO GAEZ & Mercado
               </p>
             </div>
-            <div className="no-print flex flex-wrap gap-1.5">
+            <div className="no-print flex flex-wrap items-center gap-1.5">
+              {installPrompt && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 text-xs font-semibold"
+                  onClick={handleInstallPwa}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Instalar App
+                </Button>
+              )}
               <Badge variant="outline" className="border-white/25 bg-white/10 text-white">
-                <Globe className="h-3.5 w-3.5" /> Web
+                <Globe className="h-3.5 w-3.5" /> Web / PWA
               </Badge>
               <Badge variant="outline" className="border-white/25 bg-white/10 text-white">
                 <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
@@ -234,6 +272,14 @@ export default function App() {
         </header>
 
         <main className="container space-y-6 py-6">
+          {!isOnline && (
+            <Alert variant="warning">
+              <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+              <AlertDescription>
+                Sin conexión a internet: modo campo offline activo. Podés consultar las parcelas cacheadas previamente en el dispositivo.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="no-print grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <PlotMap

@@ -11,7 +11,8 @@ from app.services.srtm_elevation import (
     calculate_polygon_centroid_and_area_ha,
     get_terrain_slope,
 )
-from app.services.vegetation_ndvi import analyze_vegetation_health
+from app.services.usda_cdl import get_cdl_history
+from app.services.vegetation_ndvi import _fetch_ornl_modis_ndvi, analyze_vegetation_health
 
 
 class RecommendationOrchestrator:
@@ -58,11 +59,15 @@ class RecommendationOrchestrator:
                 "Mové el marcador a tierra firme."
             )
 
-        with ThreadPoolExecutor(max_workers=2) as pool:
+        with ThreadPoolExecutor(max_workers=4) as pool:
             climate_future = pool.submit(get_climate_analysis, target_lat, target_lon)
             soil_future = pool.submit(get_soil_profile, target_lat, target_lon)
+            ndvi_future = pool.submit(_fetch_ornl_modis_ndvi, target_lat, target_lon)
+            cdl_future = pool.submit(get_cdl_history, target_lat, target_lon)
             climate = climate_future.result()
             soil = soil_future.result()
+            prefetched_ndvi = ndvi_future.result()
+            prefetched_cdl = cdl_future.result()
 
         if (
             climate.anomalies.recent_annual_rain_mm < 100.0
@@ -79,7 +84,13 @@ class RecommendationOrchestrator:
             climate=climate,
             current_crop=current_crop,
             years_same_crop=years_same_crop,
+            lat=target_lat,
+            lon=target_lon,
+            prefetched_ndvi=prefetched_ndvi,
+            prefetched_cdl=prefetched_cdl,
         )
+
+        effective_years = max(years_same_crop, vegetation.auto_detected_monoculture_years or 1)
 
         scenarios = generate_rotation_scenarios(
             current_crop=current_crop,
@@ -88,7 +99,7 @@ class RecommendationOrchestrator:
             terrain=terrain,
             soil=soil,
             economics_svc=self.economics,
-            years_same_crop=years_same_crop,
+            years_same_crop=effective_years,
         )
 
         provenance = {

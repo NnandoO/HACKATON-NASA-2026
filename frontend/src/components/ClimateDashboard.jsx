@@ -132,6 +132,9 @@ export default function ClimateDashboard({
             <p className="mt-1 text-xs text-muted-foreground tabular-nums">
               ET₀ {Math.round(anomalies.annual_et0_mm)} mm · Variación {anomalies.rain_anomaly_pct >= 0 ? "+" : ""}
               {anomalies.rain_anomaly_pct.toFixed(0)}%
+              {anomalies.max_daily_rain_mm > 0
+                ? ` · Pico ${anomalies.max_daily_rain_mm.toFixed(0)} mm/d (${anomalies.extreme_rain_days_gt40mm} tormentas >40mm)`
+                : ""}
             </p>
           </div>
 
@@ -245,6 +248,15 @@ export default function ClimateDashboard({
               </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{vegetation.ndvi_status}</p>
+            {vegetation.cdl_history && vegetation.cdl_history.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {vegetation.cdl_history.map((item) => (
+                  <Badge key={item.year} variant="outline" className="text-[10px] tabular-nums">
+                    CDL {item.year}: {item.category}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -265,7 +277,44 @@ export default function ClimateDashboard({
           <TabsList className="flex-wrap">
             <TabsTrigger value="annual">Tendencia anual (11 años)</TabsTrigger>
             <TabsTrigger value="monthly">Climatología mensual (Lluvia, ET₀ y SMAP)</TabsTrigger>
-            {economicsChartData.length > 0 && (
+            {vegetation.ndvi_series && vegetation.ndvi_series.length > 0 && (
+              <TabsTrigger value="ndvi">Vigor NDVI ({vegetation.ndvi_series.length} pts)</TabsTrigger>
+            )}
+            {vegetation.ndvi_series && vegetation.ndvi_series.length > 0 && (
+            <TabsContent value="ndvi">
+              <div className="rounded-lg border bg-card p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Evolución reciente del índice de verdor (NDVI 0–1)
+                  </h4>
+                  <Badge variant="outline" className="text-xs">
+                    {vegetation.source.includes("ornl_modis")
+                      ? "NASA ORNL MODIS MOD13Q1 (250 m)"
+                      : "Modelo NDVI SMAP/NASA POWER"}
+                  </Badge>
+                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <LineChart data={vegetation.ndvi_series}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" fontSize={11} />
+                    <YAxis fontSize={12} domain={[0, 1]} />
+                    <ChartTooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="ndvi"
+                      name="NDVI (0–1)"
+                      stroke="#15803d"
+                      strokeWidth={2.5}
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          )}
+
+          {economicsChartData.length > 0 && (
               <TabsTrigger value="economics">Margen y ahorro N (USD/ha)</TabsTrigger>
             )}
           </TabsList>
@@ -374,6 +423,40 @@ export default function ClimateDashboard({
               </div>
             </div>
           </TabsContent>
+
+          {vegetation.ndvi_series && vegetation.ndvi_series.length > 0 && (
+            <TabsContent value="ndvi">
+              <div className="rounded-lg border bg-card p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Evolución reciente del índice de verdor (NDVI 0–1)
+                  </h4>
+                  <Badge variant="outline" className="text-xs">
+                    {vegetation.source.includes("ornl_modis")
+                      ? "NASA ORNL MODIS MOD13Q1 (250 m)"
+                      : "Modelo NDVI SMAP/NASA POWER"}
+                  </Badge>
+                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <LineChart data={vegetation.ndvi_series}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" fontSize={11} />
+                    <YAxis fontSize={12} domain={[0, 1]} />
+                    <ChartTooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="ndvi"
+                      name="NDVI (0–1)"
+                      stroke="#15803d"
+                      strokeWidth={2.5}
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          )}
 
           {economicsChartData.length > 0 && (
             <TabsContent value="economics">

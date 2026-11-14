@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Code2, Copy, MessageCircle, Send, Smartphone } from "lucide-react";
+import { Check, Code2, Copy, MessageCircle, RotateCcw, Send, Smartphone } from "lucide-react";
 import { sendWhatsAppSimulation } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,13 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
   const [waInput, setWaInput] = useState(
     `rotacion ${currentCropId} ${lat.toFixed(4)}, ${lon.toFixed(4)}`
   );
-  const [waReply, setWaReply] = useState(
-    recommendation?.channel_payload?.whatsapp_message || ""
-  );
+  const [chatHistory, setChatHistory] = useState(() => [
+    { from: "user", text: `rotacion ${currentCropId} ${lat.toFixed(4)}, ${lon.toFixed(4)}` },
+    {
+      from: "bot",
+      text: recommendation?.channel_payload?.whatsapp_message || "",
+    },
+  ]);
   const [sendingWa, setSendingWa] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
 
@@ -22,9 +26,14 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
   const compactApiSummary = {
     location: recommendation?.location,
     data_provenance: recommendation?.data_provenance,
+    storm_metrics: {
+      extreme_rain_days_gt40mm: recommendation?.climate_analysis?.anomalies?.extreme_rain_days_gt40mm,
+      max_daily_rain_mm: recommendation?.climate_analysis?.anomalies?.max_daily_rain_mm,
+    },
     vegetation_health: {
       estimated_ndvi: recommendation?.vegetation_health?.estimated_ndvi,
       soil_exhaustion_risk: recommendation?.vegetation_health?.soil_exhaustion_risk,
+      cdl_history: recommendation?.vegetation_health?.cdl_history,
     },
     top_scenarios: (recommendation?.scenarios || []).map((s) => ({
       rank: s.scenario_rank,
@@ -35,17 +44,27 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
     })),
   };
 
-  const handleTestWebhook = async (e) => {
-    e.preventDefault();
+  const sendMessageToWebhook = async (textToSend) => {
+    const trimmed = textToSend.trim();
+    if (!trimmed) return;
     setSendingWa(true);
+    setChatHistory((prev) => [...prev, { from: "user", text: trimmed }]);
     try {
-      const res = await sendWhatsAppSimulation({ body: waInput });
-      setWaReply(res.reply_text);
+      const res = await sendWhatsAppSimulation({
+        fromNumber: "whatsapp:+549351000001",
+        body: trimmed,
+      });
+      setChatHistory((prev) => [...prev, { from: "bot", text: res.reply_text }]);
     } catch (err) {
-      setWaReply(`Error: ${err.message}`);
+      setChatHistory((prev) => [...prev, { from: "bot", text: `Error: ${err.message}` }]);
     } finally {
       setSendingWa(false);
     }
+  };
+
+  const handleTestWebhook = (e) => {
+    e.preventDefault();
+    sendMessageToWebhook(waInput);
   };
 
   const handleCopyJson = async () => {
@@ -63,10 +82,10 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <Smartphone className="h-5 w-5 text-primary" />
-          Canales de consulta: Web, WhatsApp y App Móvil
+          Canales de consulta: Web, WhatsApp (2 pasos) y App Móvil
         </CardTitle>
         <CardDescription>
-          El mismo motor REST abastece al dashboard web, al webhook de WhatsApp y al formato compacto para apps móviles en zonas con baja señal.
+          El mismo motor REST abastece al dashboard web, al bot conversacional de WhatsApp (Twilio TwiML / Meta JSON) y a apps móviles offline-first.
         </CardDescription>
       </CardHeader>
 
@@ -75,7 +94,7 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
           <TabsList className="flex-wrap">
             <TabsTrigger value="whatsapp">
               <MessageCircle className="h-4 w-4" />
-              Canal WhatsApp (Webhook en vivo)
+              Canal WhatsApp (2 pasos / Twilio)
             </TabsTrigger>
             <TabsTrigger value="mobile">
               <Smartphone className="h-4 w-4" />
@@ -88,32 +107,74 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
           </TabsList>
 
           <TabsContent value="whatsapp" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Simular flujo en 2 pasos:</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={sendingWa}
+                onClick={() => sendMessageToWebhook(`${lat.toFixed(4)}, ${lon.toFixed(4)}`)}
+              >
+                Paso 1: Enviar solo coordenadas
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={sendingWa}
+                onClick={() => sendMessageToWebhook("1 3 años")}
+              >
+                Paso 2: Responder &quot;1 3 años&quot;
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={sendingWa}
+                onClick={() => {
+                  setChatHistory([]);
+                  sendMessageToWebhook("reset");
+                }}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reiniciar
+              </Button>
+            </div>
+
             <form onSubmit={handleTestWebhook} className="flex flex-wrap gap-2">
               <Input
                 type="text"
                 className="min-w-[240px] flex-1"
                 value={waInput}
                 onChange={(e) => setWaInput(e.target.value)}
-                placeholder="Ej: rotacion maiz -31.48, -63.55"
+                placeholder="Ej: -31.48, -63.55 o '1 3 años'"
                 aria-label="Mensaje de prueba para webhook WhatsApp"
               />
               <Button type="submit" variant="secondary" disabled={sendingWa}>
                 <Send className="h-4 w-4" />
-                {sendingWa ? "Consultando..." : "Probar Webhook"}
+                {sendingWa ? "Consultando..." : "Enviar mensaje"}
               </Button>
             </form>
 
             <div className="max-w-xl overflow-hidden rounded-2xl border border-stone-300 bg-[#efeae2]">
-              <div className="bg-[#075e54] px-4 py-2.5 text-sm font-semibold text-white">
-                AgroNASA Bot · WhatsApp
+              <div className="flex items-center justify-between bg-[#075e54] px-4 py-2.5 text-sm font-semibold text-white">
+                <span>AgroNASA Bot · WhatsApp</span>
+                <span className="text-[11px] font-normal text-white/80">Sesión SQLite activa</span>
               </div>
-              <div className="flex flex-col gap-3 p-4">
-                <div className="self-end rounded-lg bg-[#dcf8c6] px-3 py-2 text-xs text-stone-900 shadow-sm">
-                  {waInput}
-                </div>
-                <div className="max-w-[95%] self-start whitespace-pre-wrap rounded-lg bg-white px-3.5 py-2.5 text-xs leading-relaxed text-stone-800 shadow-sm">
-                  {waReply || recommendation?.channel_payload?.whatsapp_message}
-                </div>
+              <div className="flex max-h-96 flex-col gap-3 overflow-y-auto p-4">
+                {chatHistory.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={
+                      item.from === "user"
+                        ? "self-end rounded-lg bg-[#dcf8c6] px-3 py-2 text-xs text-stone-900 shadow-sm"
+                        : "max-w-[95%] self-start whitespace-pre-wrap rounded-lg bg-white px-3.5 py-2.5 text-xs leading-relaxed text-stone-800 shadow-sm"
+                    }
+                  >
+                    {item.text}
+                  </div>
+                ))}
               </div>
             </div>
           </TabsContent>
@@ -170,9 +231,10 @@ export default function ChannelPreview({ recommendation, lat, lon, currentCropId
           </TabsContent>
 
           <TabsContent value="json" className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
-                Resumen JSON unificado devuelto por <code className="rounded bg-muted px-1 py-0.5">/api/recommend-rotation</code>
+                Endpoints: <code className="rounded bg-muted px-1 py-0.5">/api/recommend-rotation</code> ·{" "}
+                <code className="rounded bg-muted px-1 py-0.5">/api/channels/whatsapp/twilio</code> (TwiML XML)
               </p>
               <Button type="button" size="sm" variant="outline" onClick={handleCopyJson}>
                 {copiedJson ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <Copy className="h-3.5 w-3.5" />}

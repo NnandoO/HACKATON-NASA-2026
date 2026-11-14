@@ -12,9 +12,12 @@ class Settings(BaseSettings):
         Path(__file__).resolve().parents[2] / "data" / "market_prices_reference.json"
     )
     nasa_power_base_url: str = "https://power.larc.nasa.gov/api/temporal/monthly/point"
+    nasa_power_daily_url: str = "https://power.larc.nasa.gov/api/temporal/daily/point"
     srtm_base_url: str = "https://api.opentopodata.org/v1/srtm90m"
     soilgrids_base_url: str = "https://rest.isric.org/soilgrids/v2.0/properties/query"
     usda_sda_url: str = "https://sdmdataaccess.sc.egov.usda.gov/Tabular/post.rest"
+    usda_cdl_url: str = "https://nassgeodata.gmu.edu/axis2/services/CDLService/GetCDLValue"
+    ornl_modis_base_url: str = "https://modis.ornl.gov/rst/api/v1/MOD13Q1"
     nasa_gibs_ndvi_wmts: str = (
         "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/"
         "MODIS_Terra_NDVI_8Day/default/2025-10-16/"
@@ -27,6 +30,8 @@ class Settings(BaseSettings):
     cache_climate_ttl_hours: int = 24
     cache_terrain_ttl_days: int = 30
     cache_soil_ttl_days: int = 30
+    cache_ndvi_ttl_days: int = 7
+    cache_cdl_ttl_days: int = 90
     cors_origins: list[str] = ["*"]
 
     model_config = SettingsConfigDict(env_prefix="", case_sensitive=False)
