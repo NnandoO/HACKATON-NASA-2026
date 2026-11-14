@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: agronasa-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - FAO_RULES_PATH=/app/data/fao_crops_rules.json
+    volumes:
+      - ./data:/app/data:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: agronasa-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_PROXY=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped

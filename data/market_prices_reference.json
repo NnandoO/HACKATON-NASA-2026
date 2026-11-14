@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "source": "USDA AMS Market News / NASS QuickStats & Referencia Regional Agrícola (Base Simulada)",
+    "currency": "USD",
+    "nitrogen_fertilizer_cost_usd_per_kg": 1.25
+  },
+  "prices": {
+    "maiz": {
+      "price_usd_ton": 195.0,
+      "avg_yield_ton_ha": 7.5,
+      "cost_usd_ha": 890.0,
+      "yoy_trend_pct": -3.5,
+      "market_demand": "Media-Alta (estable)",
+      "note": "Alta demanda forrajera y etanol, aunque con mayor costo de fertilizante nitrogenado."
+    },
+    "trigo": {
+      "price_usd_ton": 225.0,
+      "avg_yield_ton_ha": 4.2,
+      "cost_usd_ha": 580.0,
+      "yoy_trend_pct": 2.0,
+      "market_demand": "Alta",
+      "note": "Mercado molinero estable con menor riesgo financiero en invierno."
+    },
+    "sorgo": {
+      "price_usd_ton": 182.0,
+      "avg_yield_ton_ha": 5.8,
+      "cost_usd_ha": 540.0,
+      "yoy_trend_pct": 6.5,
+      "market_demand": "Creciente",
+      "note": "Menores costos de implantación que el maíz y fuerte demanda forrajera/exportación."
+    },
+    "alfalfa": {
+      "price_usd_ton": 165.0,
+      "avg_yield_ton_ha": 10.5,
+      "cost_usd_ha": 640.0,
+      "yoy_trend_pct": 8.0,
+      "market_demand": "Alta (heno y ganadería)",
+      "note": "Genera ahorro directo de fertilizante para el siguiente cultivo al fijar +180 kg N/ha."
+    },
+    "soja": {
+      "price_usd_ton": 410.0,
+      "avg_yield_ton_ha": 3.2,
+      "cost_usd_ha": 690.0,
+      "yoy_trend_pct": 4.5,
+      "market_demand": "Muy Alta",
+      "note": "Liquidez inmediata en mercado internacional y bajo requerimiento de urea."
+    },
+    "frijol": {
+      "price_usd_ton": 890.0,
+      "avg_yield_ton_ha": 1.6,
+      "cost_usd_ha": 670.0,
+      "yoy_trend_pct": 11.0,
+      "market_demand": "Alta (consumo interno y exportación)",
+      "note": "Ciclo corto (~95 días) con excelente precio por tonelada y retorno rápido de capital."
+    },
+    "girasol": {
+      "price_usd_ton": 465.0,
+      "avg_yield_ton_ha": 2.4,
+      "cost_usd_ha": 590.0,
+      "yoy_trend_pct": 7.5,
+      "market_demand": "Alta (aceite alto oleico)",
+      "note": "Prima atractiva en mercado aceitero y bajo requerimiento de insumos en suelos profundos."
+    },
+    "garbanzo": {
+      "price_usd_ton": 780.0,
+      "avg_yield_ton_ha": 1.8,
+      "cost_usd_ha": 610.0,
+      "yoy_trend_pct": 12.5,
+      "market_demand": "Muy Alta (legumbres de exportación)",
+      "note": "Fuerte alza interanual (+12.5%) y excelente margen neto en zonas semiáridas."
+    }
+  }
+}

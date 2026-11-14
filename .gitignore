@@ -1,0 +1,20 @@
+# Python / FastAPI
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Node / React / Vite
+node_modules/
+frontend/dist/
+
+# Runtime SQLite geospatial cache & secrets
+data/*.sqlite3
+data/*.sqlite3-journal
+.env
+.env.*
+
+# Editor / OS
+.DS_Store
+*.log

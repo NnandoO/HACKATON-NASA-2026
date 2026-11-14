@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 80 18% 97%;
+    --foreground: 145 28% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 145 28% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 145 28% 12%;
+    --primary: 150 44% 21%;
+    --primary-foreground: 80 20% 98%;
+    --secondary: 96 16% 92%;
+    --secondary-foreground: 145 30% 16%;
+    --muted: 90 14% 93%;
+    --muted-foreground: 142 12% 38%;
+    --accent: 96 18% 90%;
+    --accent-foreground: 145 32% 15%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 105 15% 84%;
+    --input: 105 15% 82%;
+    --ring: 150 44% 24%;
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    background: hsl(150 44% 21% / 0.16);
+    color: hsl(145 28% 12%);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keep Leaflet controls crisp below Radix portals */
+.leaflet-container {
+  font-family: inherit;
+  z-index: 1;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

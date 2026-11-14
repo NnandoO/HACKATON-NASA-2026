@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "name": "AgroNASA Design System",
+  "description": "High-clarity agronomic decision workbench combining warm field-paper surfaces, forest-pine primary actions, and tabular scientific telemetry across Web, WhatsApp, and Mobile previews.",
+  "narrative": "AgroNASA pairs warm, daylight-legible field-paper surfaces (#f7f9f5) with deep forest-pine actions (#1e4d36) and crisp white data cards (#ffffff) so farmers and agronomists can inspect satellite climate anomalies, soil taxonomy, NDVI health, and crop rotation profitability without visual glare. Every metric uses tabular numerals (Public Sans + tabular-nums) and semantic shadcn/ui + Radix primitives so multi-channel outputs (Web dashboard, WhatsApp digest, and Mobile payload) remain scannable, accessible, and consistent.",
+  "tokens": {
+    "colors": {
+      "background": "#f7f9f5",
+      "foreground": "#16271d",
+      "card": "#ffffff",
+      "primary": "#1e4d36",
+      "primary-foreground": "#fafbf8",
+      "secondary": "#eaece7",
+      "secondary-foreground": "#1d3528",
+      "muted": "#edf0ea",
+      "muted-foreground": "#556c5d",
+      "border": "#d3dbd0",
+      "destructive": "#c52020",
+      "success": "#065f46",
+      "warning": "#92400e"
+    },
+    "typography": {
+      "sans": "\"Public Sans\", system-ui, -apple-system, sans-serif",
+      "base-size": "1rem",
+      "heading-weight": 700,
+      "body-weight": 400
+    },
+    "rounded": {
+      "sm": "6px",
+      "md": "8px",
+      "lg": "10px",
+      "xl": "12px",
+      "full": "9999px"
+    },
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "20px",
+      "xl": "24px",
+      "2xl": "32px"
+    }
+  },
+  "extensions": {
+    "tonalRamps": {
+      "primary": {
+        "50": "#eef5f0",
+        "100": "#d5e7dc",
+        "300": "#7eb396",
+        "500": "#2f7450",
+        "700": "#1e4d36",
+        "900": "#112c1f"
+      },
+      "neutral": {
+        "50": "#f7f9f5",
+        "100": "#edf0ea",
+        "200": "#d3dbd0",
+        "500": "#556c5d",
+        "800": "#1d3528",
+        "900": "#16271d"
+      }
+    },
+    "elevation": {
+      "card": "0 2px 10px rgba(20, 40, 28, 0.04)",
+      "popover": "0 8px 24px rgba(20, 40, 28, 0.10)"
+    },
+    "motion": {
+      "fast": "150ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "standard": "200ms cubic-bezier(0.2, 0.8, 0.2, 1)"
+    }
+  },
+  "components": [
+    {
+      "id": "button-primary",
+      "name": "Button (Primary)",
+      "category": "Actions",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 2a10 10 0 1 0 10 10\"/><path d=\"M12 12l7-7\"/></svg>Analizar rotación</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:40px;padding:8px 16px;border:0;border-radius:8px;background:#1e4d36;color:#fafbf8;font-family:'Public Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 150ms ease}.ds-btn-primary:hover{opacity:.92}.ds-icon{width:16px;height:16px}"
+    },
+    {
+      "id": "button-outline",
+      "name": "Button (Outline)",
+      "category": "Actions",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Compartir por WhatsApp</button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;gap:8px;height:36px;padding:8px 14px;border:1px solid #d3dbd0;border-radius:8px;background:#ffffff;color:#16271d;font-family:'Public Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 150ms ease}.ds-btn-outline:hover{background:#edf0ea}"
+    },
+    {
+      "id": "card",
+      "name": "Telemetry Card",
+      "category": "Surfaces",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-label\">Humedad superficial (SMAP)</div><div class=\"ds-card-value\">64%</div><div class=\"ds-card-note\">Estación crítica: Jul–Ago sin déficit severo</div></div>",
+      "css": ".ds-card{background:#ffffff;border:1px solid #d3dbd0;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(20,40,28,0.04);font-family:'Public Sans',sans-serif;max-width:280px}.ds-card-label{font-size:13px;font-weight:600;color:#556c5d}.ds-card-value{margin-top:6px;font-size:26px;font-weight:700;color:#16271d;font-variant-numeric:tabular-nums}.ds-card-note{margin-top:4px;font-size:12px;color:#556c5d}"
+    },
+    {
+      "id": "badge-success",
+      "name": "Badge (Success)",
+      "category": "Status",
+      "html": "<span class=\"ds-badge-success\">Alta idoneidad · +12% mercado</span>",
+      "css": ".ds-badge-success{display:inline-flex;align-items:center;padding:2px 10px;border-radius:8px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-family:'Public Sans',sans-serif;font-size:12px;font-weight:600}"
+    },
+    {
+      "id": "input",
+      "name": "Coordinate Input",
+      "category": "Forms",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Latitud</span><input class=\"ds-input\" type=\"text\" value=\"41.9000\" readonly /></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font-family:'Public Sans',sans-serif;max-width:200px}.ds-field-label{font-size:12px;font-weight:600;color:#1d3528}.ds-input{height:40px;padding:8px 12px;border:1px solid #d3dbd0;border-radius:8px;background:#f7f9f5;color:#16271d;font-size:14px;font-variant-numeric:tabular-nums}"
+    }
+  ]
+}
